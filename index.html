@@ -13,6 +13,22 @@
       #map {
         height: 100%;
       }
+      #legend {
+        background: #FFF;
+        padding: 10px;
+        margin: 5px;
+        font-size: 12px;
+        font-family: Arial, sans-serif;
+        height: 255px;
+        width: 150px;
+      }
+      #legend div {
+       height: 210px;
+       overflow: auto;
+      }
+      #legend li {
+       list-style-type: none;
+      }
     </style>
   </head>
   <body>
@@ -49,6 +65,18 @@
         return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
       }
 
+      function toggleLayer(checked, pkmn) {
+        if (checked) {
+            hidden_layers.push(pkmn);
+        } else {
+            var index = hidden_layers.indexOf(pkmn);
+            if(index > -1){
+              hidden_layers.splice(index,1);
+            }
+        }
+        refreshData();
+      };
+
 
       var preLength = -1;
       function refreshData() {
@@ -80,40 +108,58 @@
                 updated = true;
               }
 
-              console.log("Adding marker " + p);
+              if(hidden_layers.indexOf(p.name) == -1){
+                // Pokemon not hidden
+                if(layers.indexOf(p.name) == -1){
+                  layers.push(p.name);
+                }
+                console.log("Adding marker " + p.name);
 
-              var infowindow = new google.maps.InfoWindow({
-              });
+                var infowindow = new google.maps.InfoWindow({
+                });
 
-              var image = "https://raw.githubusercontent.com/AHAAAAAAA/PokemonGo-Map/master/static/icons/" + p.id + ".png";
-              if (p.id == -1) {
-                image = 'https://agents.farmers.com/images/walking.png';
+                var image = "https://raw.githubusercontent.com/AHAAAAAAA/PokemonGo-Map/master/static/icons/" + p.id + ".png";
+                if (p.id == -1) {
+                    image = 'https://agents.farmers.com/images/walking.png';
+                }
+
+                p.timeleft = Math.floor(p.expiry - p.timestamp);
+
+                var marker = new google.maps.Marker({
+                  map: map,
+                  position: {lat: p.lat, lng: p.lng},
+                  label: "",
+                  title: "<b>"+p.name+"</b><br>Time left: " + p.timeleft + "s<br>Lat: "+p.lat+"<br>Long: "+p.lng,
+                  icon: image
+                });
+
+                var listenerPair = {
+                  a: google.maps.event.addListener(marker, 'mouseover', function() {
+                    infowindow.setContent(this.title);
+                    infowindow.open(map, this);
+                  }),
+
+                  b: google.maps.event.addListener(marker, 'mouseout', function() {
+                    infowindow.close(map, this);
+                  })
+                };
+
+                listeners.push(listenerPair);
+                markers.push(marker);
               }
-              
-              p.timeleft = Math.floor(p.expiry - p.timestamp);
-
-              var marker = new google.maps.Marker({
-                map: map,
-                position: {lat: p.lat, lng: p.lng},
-                label: '',
-                title: "<b>"+p.name+"</b><br>Time left: " + p.timeleft + "s<br>Lat: "+p.lat+"<br>Long: "+p.lng,
-                icon: image
-              });
-
-              var listenerPair = {
-                a: google.maps.event.addListener(marker, 'mouseover', function() {
-                  infowindow.setContent(this.title);
-                  infowindow.open(map, this);
-                }),
-
-                b: google.maps.event.addListener(marker, 'mouseout', function() {
-                  infowindow.close(map, this);
-                })
-              };
-
-              listeners.push(listenerPair);
-              markers.push(marker);
             }
+
+            // Draw layer manager
+            var list = document.getElementById('legend-list');
+            var content = [];
+            for (var id in layers) {
+              var pkmn = layers[id];
+              var checked = hidden_layers.indexOf(pkmn) != -1 ? "checked": "";
+              content.push("<li><input type='checkbox' id='" + pkmn +  "'" +
+              " onclick='toggleLayer(this.checked, this.id)' "+checked+"\/>" +
+              pkmn + "<\/li>");
+            }
+            list.innerHTML = content.join('');
           }
         });
       }
@@ -122,6 +168,8 @@
       map = null;
       markers = [];
       listeners = [];
+      hidden_layers = [];
+      layers = [];
       updated = false;
 
 
@@ -139,8 +187,16 @@
           center: {lat: 0, lng: 0},
           zoom: 4
         });
+
+        var legend = document.createElement('div');
+        legend.id = 'legend';
+        var content = [];
+        content.push('<h3>Hide Pokemon</h3>');
+        content.push('<div id="legend-list"></div>');
+        legend.innerHTML = content.join('');
+        legend.index = 1;
+        map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(legend);
       }
     </script>
   </body>
 </html>
-Except as otherwise noted, the content of this page is licensed under the Creative Commons Attribution 3.0 License, and code samples are licensed under the Apache 2.0 License. For details, see our Site Policies. Java is a registered trademark of Oracle and/or its affiliates.

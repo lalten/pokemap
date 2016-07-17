@@ -1,3 +1,7 @@
+data.json
+config.json
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -88,8 +92,6 @@ ENV/
 # Rope project settings
 .ropeproject
 
-data.json
 core
 pokemon_pb2.py
 *~
-config.json

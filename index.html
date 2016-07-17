@@ -123,6 +123,7 @@
                 if(layers.indexOf(p.name) == -1){
                   layers.push(p.name);
                   layers.sort();
+                  document.getElementById('pknum').innerHTML = " (" + (layers.length - 1) + ")";
                 }
                 console.log("Adding marker " + p.name);
 
@@ -216,7 +217,7 @@
         var legend = document.createElement('div');
         legend.id = 'legend';
         var content = [];
-        content.push('<h3>Hide Pokemon</h3>');
+        content.push('<h3>Hide Pokemon<span id="pknum"></span></h3>');
         content.push('<div id="legend-list"></div>');
         legend.innerHTML = content.join('');
         legend.index = 1;

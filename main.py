@@ -70,6 +70,12 @@ def prune():
         if poke['expiry'] <= cur_time:
             del DATA[pokehash]
 
+try:
+    with open(DATA_FILE, 'r') as f:
+        DATA = json.load(f)
+except:
+    pass
+
 def write_data_to_file():
     prune()
 

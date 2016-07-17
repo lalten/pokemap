@@ -189,7 +189,10 @@ def get_profile(access_token, api, useauth, *reqq):
 def get_api_endpoint(access_token, api = API_URL):
     (rtime, p_ret) = get_profile(access_token, api, None)
     try:
-        return ('https://%s/rpc' % p_ret.api_url)
+        if p_ret.api_url:
+            return ('https://%s/rpc' % p_ret.api_url)
+        else:
+            return None
     except:
         return None
 
@@ -285,30 +288,35 @@ def main():
         return
     print('[+] RPC Session Token: {} ...'.format(access_token[:25]))
 
-    api_endpoint = get_api_endpoint(access_token)
-    if api_endpoint is None:
-        print('[-] RPC server offline')
-        return
+    while True:
+        api_endpoint = get_api_endpoint(access_token)
+        if api_endpoint is None:
+            print('[-] RPC server offline')
+        else:
+            break
     print('[+] Received API endpoint: {}'.format(api_endpoint))
 
-    (rtime, response) = get_profile(access_token, api_endpoint, None)
-    if response is not None:
-        print('[+] Login successful')
+    while True:
+        (rtime, response) = get_profile(access_token, api_endpoint, None)
+        if response is not None and len(response.payload):
+            print('[+] Login successful')
 
-        payload = response.payload[0]
-        profile = pokemon_pb2.ResponseEnvelop.ProfilePayload()
-        profile.ParseFromString(payload)
-        print('[+] Username: {}'.format(profile.profile.username))
+            payload = response.payload[0]
+            profile = pokemon_pb2.ResponseEnvelop.ProfilePayload()
+            profile.ParseFromString(payload)
+            print('[+] Username: {}'.format(profile.profile.username))
 
-        creation_time = datetime.fromtimestamp(int(profile.profile.creation_time)/1000)
-        print('[+] You are playing Pokemon Go since: {}'.format(
-            creation_time.strftime('%Y-%m-%d %H:%M:%S'),
-        ))
+            creation_time = datetime.fromtimestamp(int(profile.profile.creation_time)/1000)
+            print('[+] You are playing Pokemon Go since: {}'.format(
+                creation_time.strftime('%Y-%m-%d %H:%M:%S'),
+            ))
 
-        for curr in profile.profile.currency:
-            print('[+] {}: {}'.format(curr.type, curr.amount))
-    else:
-        print('[-] Ooops...')
+            for curr in profile.profile.currency:
+                print('[+] {}: {}'.format(curr.type, curr.amount))
+
+            break
+        else:
+            print('[-] Ooops...')
 
     origin = LatLng.from_degrees(FLOAT_LAT, FLOAT_LONG)
     step = 0

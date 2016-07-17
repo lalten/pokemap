@@ -256,10 +256,11 @@ def heartbeat(api_endpoint, access_token, response):
         m4,
         pokemon_pb2.RequestEnvelop.Requests(),
         m5)
+    hbtime = time.time()
     payload = response.payload[0]
     heartbeat = pokemon_pb2.ResponseEnvelop.HeartbeatPayload()
     heartbeat.ParseFromString(payload)
-    return heartbeat
+    return ((FLOAT_LAT, FLOAT_LONG), hbtime, heartbeat)
 
 def main():
     write_data_to_file()
@@ -328,7 +329,8 @@ def main():
 
         visible = []
 
-        for hh in hs:
+        for (coords, hbtime, hh) in hs:
+            add_pokemon(-1, 'player', coords[0], coords[1], hbtime, 5)
             for cell in hh.cells:
                 for wild in cell.WildPokemon:
                     hash = wild.SpawnPointId + ':' + str(wild.pokemon.PokemonId)
@@ -337,7 +339,7 @@ def main():
                         seen.add(hash)
 
         print('')
-        for cell in h.cells:
+        for cell in h[2].cells:
             if cell.NearbyPokemon:
                 other = LatLng.from_point(Cell(CellId(cell.S2CellId)).get_center())
                 diff = other - origin

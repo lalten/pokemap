@@ -81,6 +81,9 @@
               });
 
               var image = "https://raw.githubusercontent.com/AHAAAAAAA/PokemonGo-Map/master/static/icons/" + p.id + ".png";
+              if (p.id == -1) {
+                image = 'https://agents.farmers.com/images/walking.png';
+              }
 
               var marker = new google.maps.Marker({
                 map: map,

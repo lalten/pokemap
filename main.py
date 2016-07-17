@@ -263,7 +263,6 @@ def heartbeat(api_endpoint, access_token, response):
     return ((FLOAT_LAT, FLOAT_LONG), hbtime, heartbeat)
 
 def main():
-    write_data_to_file()
     pokemons = json.load(open('pokemon.json'))
     parser = argparse.ArgumentParser()
     parser.add_argument("-u", "--username", help="PTC Username", required=True)

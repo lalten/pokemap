@@ -50,13 +50,14 @@
       }
 
 
+      var preLength = -1;
       function refreshData() {
         getFile("data.json", true, function(response) {
           console.log("Refreshing data...");
-          var preLength = data.length;
           data = JSON.parse(response);
 
-          if (preLength != data.length) {
+          if (preLength != response.length) {
+            preLength = response.length;
             // Clear markers
             for (var i = 0; i < markers.length; i++) {
               listeners[i].a.remove();
@@ -67,8 +68,12 @@
             markers = [];
 
             // Add updated markers
-            for (var i = 0; i < data.length; i++) {
-              var p = data[i];
+            for (var pokehash in data) {
+              if (!data.hasOwnProperty(pokehash)) {
+                // inherited, not interesting to us
+                continue;
+              }
+              var p = data[pokehash];
               if (!updated) {
                 map.setZoom(16);
                 map.panTo({lat: p.lat, lng: p.lng});

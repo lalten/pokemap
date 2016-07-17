@@ -51,7 +51,7 @@ FLOAT_LONG = 0
 
 NUM_STEPS = 20
 DATA_FILE = 'data.json'
-DATA = []
+DATA = {}
 
 def f2i(float):
   return struct.unpack('<Q', struct.pack('<d', float))[0]
@@ -65,10 +65,10 @@ def h2f(hex):
 def prune():
     # prune despawned pokemon
     cur_time = time.time()
-    for i, poke in reversed(list(enumerate(DATA))):
+    for (pokehash, poke) in DATA.items():
         poke['timestamp'] = cur_time
         if poke['expiry'] <= cur_time:
-            DATA.pop(i)
+            del DATA[pokehash]
 
 def write_data_to_file():
     prune()
@@ -77,14 +77,25 @@ def write_data_to_file():
         json.dump(DATA, f, indent=2)
 
 def add_pokemon(pokeId, name, lat, lng, timestamp, timeleft):
-    DATA.append({
-        'id': pokeId,
-        'name': name,
-        'lat': lat,
-        'lng': lng,
-        'timestamp': timestamp,
-        'expiry': timestamp + timeleft
-    });
+    expiry = timestamp + timeleft
+    pokehash = '%s:%s:%s' % (lat, lng, pokeId)
+    if pokehash in DATA:
+        if abs(DATA[pokehash]['expiry'] - expiry) < 2:
+            # Assume it's the same one and average the expiry time
+            DATA[pokehash]['expiry'] += expiry
+            DATA[pokehash]['expiry'] /= 2
+        else:
+            print('[-] Two %s at the same location (%s,%s)' % (name, lat, lng))
+            DATA[pokehash]['expiry'] = max(DATA[pokehash]['expiry'], expiry)
+    else:
+        DATA[pokehash] = {
+            'id': pokeId,
+            'name': name,
+            'lat': lat,
+            'lng': lng,
+            'timestamp': timestamp,
+            'expiry': expiry
+        }
 
 def set_location(location_name):
     geolocator = GoogleV3()

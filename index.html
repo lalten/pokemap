@@ -84,6 +84,8 @@
               if (p.id == -1) {
                 image = 'https://agents.farmers.com/images/walking.png';
               }
+              
+              p.timeleft = Math.floor(p.expiry - p.timestamp);
 
               var marker = new google.maps.Marker({
                 map: map,

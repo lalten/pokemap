@@ -64,11 +64,10 @@ def h2f(hex):
 
 def prune():
     # prune despawned pokemon
-    cur_time = int(time.time())
+    cur_time = time.time()
     for i, poke in reversed(list(enumerate(DATA))):
-        poke['timeleft'] = poke['timeleft'] - (cur_time - poke['timestamp'])
         poke['timestamp'] = cur_time
-        if poke['timeleft'] <= 0:
+        if poke['expiry'] <= cur_time:
             DATA.pop(i)
 
 def write_data_to_file():
@@ -84,7 +83,7 @@ def add_pokemon(pokeId, name, lat, lng, timestamp, timeleft):
         'lat': lat,
         'lng': lng,
         'timestamp': timestamp,
-        'timeleft': timeleft
+        'expiry': timestamp + timeleft
     });
 
 def set_location(location_name):
@@ -149,7 +148,7 @@ def api_req(api_endpoint, access_token, *mehs, **kw):
             print("[ ] Sleeping for 1 second")
             time.sleep(1)
             return (reqtime, p_ret)
-        except Exception, e:
+        except Exception as e:
             if DEBUG:
                 print(e)
             print('[-] API request error, retrying')
@@ -214,7 +213,7 @@ def login_ptc(username, password):
     ticket = None
     try:
         ticket = re.sub('.*ticket=', '', r1.history[0].headers['Location'])
-    except e:
+    except Exception as e:
         if DEBUG:
             print(r1.json()['errors'][0])
         return None
@@ -337,7 +336,6 @@ def main():
         visible = []
 
         for (coords, hbtime, hh) in hs:
-            hbtime = int(hbtime)
             add_pokemon(-1, 'player', coords[0], coords[1], hbtime, 5)
             for cell in hh.cells:
                 for wild in cell.WildPokemon:

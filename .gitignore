@@ -87,3 +87,8 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+data.json
+core
+pokemon_pb2.py
+*~

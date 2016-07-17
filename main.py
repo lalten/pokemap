@@ -134,6 +134,7 @@ def api_req(api_endpoint, access_token, *mehs, **kw):
             protobuf = p_req.SerializeToString()
 
             r = SESSION.post(api_endpoint, data=protobuf, verify=False)
+            reqtime = time.time()
 
             p_ret = pokemon_pb2.ResponseEnvelop()
             p_ret.ParseFromString(r.content)
@@ -147,7 +148,7 @@ def api_req(api_endpoint, access_token, *mehs, **kw):
 
             print("[ ] Sleeping for 1 second")
             time.sleep(1)
-            return p_ret
+            return (reqtime, p_ret)
         except Exception, e:
             if DEBUG:
                 print(e)
@@ -186,7 +187,7 @@ def get_profile(access_token, api, useauth, *reqq):
     return api_req(api, access_token, req, useauth = useauth)
 
 def get_api_endpoint(access_token, api = API_URL):
-    p_ret = get_profile(access_token, api, None)
+    (rtime, p_ret) = get_profile(access_token, api, None)
     try:
         return ('https://%s/rpc' % p_ret.api_url)
     except:
@@ -247,7 +248,7 @@ def heartbeat(api_endpoint, access_token, response):
     m.lat = COORDS_LATITUDE
     m.long = COORDS_LONGITUDE
     m1.message = m.SerializeToString()
-    response = get_profile(
+    (hbtime, response) = get_profile(
         access_token,
         api_endpoint,
         response.unknown7,
@@ -256,7 +257,6 @@ def heartbeat(api_endpoint, access_token, response):
         m4,
         pokemon_pb2.RequestEnvelop.Requests(),
         m5)
-    hbtime = time.time()
     payload = response.payload[0]
     heartbeat = pokemon_pb2.ResponseEnvelop.HeartbeatPayload()
     heartbeat.ParseFromString(payload)
@@ -292,7 +292,7 @@ def main():
         return
     print('[+] Received API endpoint: {}'.format(api_endpoint))
 
-    response = get_profile(access_token, api_endpoint, None)
+    (rtime, response) = get_profile(access_token, api_endpoint, None)
     if response is not None:
         print('[+] Login successful')
 
@@ -330,12 +330,13 @@ def main():
         visible = []
 
         for (coords, hbtime, hh) in hs:
+            hbtime = int(hbtime)
             add_pokemon(-1, 'player', coords[0], coords[1], hbtime, 5)
             for cell in hh.cells:
                 for wild in cell.WildPokemon:
                     hash = wild.SpawnPointId + ':' + str(wild.pokemon.PokemonId)
                     if (hash not in seen):
-                        visible.append(wild)
+                        visible.append((hbtime, wild))
                         seen.add(hash)
 
         print('')
@@ -352,7 +353,7 @@ def main():
                     print('    (%s) %s' % (poke.PokedexNumber, pokemons[poke.PokedexNumber - 1]['Name']))
 
         print('')
-        for poke in visible:
+        for (timestamp, poke) in visible:
             other = LatLng.from_degrees(poke.Latitude, poke.Longitude)
             diff = other - origin
             # print(diff)
@@ -362,7 +363,6 @@ def main():
 
             print("(%s) %s is visible at (%s, %s) for %s seconds (%sm %s from you)" % (poke.pokemon.PokemonId, pokemons[poke.pokemon.PokemonId - 1]['Name'], poke.Latitude, poke.Longitude, poke.TimeTillHiddenMs / 1000, int(origin.get_distance(other).radians * 6366468.241830914), direction))
 
-            timestamp = int(time.time())
             add_pokemon(poke.pokemon.PokemonId, pokemons[poke.pokemon.PokemonId - 1]['Name'], poke.Latitude, poke.Longitude, timestamp, poke.TimeTillHiddenMs / 1000)
 
         write_data_to_file()

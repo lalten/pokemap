@@ -80,12 +80,12 @@
               var infowindow = new google.maps.InfoWindow({
               });
 
-              var image = "http://icons.iconarchive.com/icons/hektakun/pokemon/72/" + pad(p.id, 3) + "-" + cap(p.name) + "-icon.png";
+              var image = "https://raw.githubusercontent.com/AHAAAAAAA/PokemonGo-Map/master/static/icons/" + p.id + ".png";
 
               var marker = new google.maps.Marker({
                 map: map,
                 position: {lat: p.lat, lng: p.lng},
-                label: p.name.charAt(0),
+                label: '',
                 title: "<b>"+p.name+"</b><br>Time left: " + p.timeleft + "s<br>Lat: "+p.lat+"<br>Long: "+p.lng,
                 icon: image
               });

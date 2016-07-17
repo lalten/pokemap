@@ -87,18 +87,28 @@
           if (preLength != response.length) {
             preLength = response.length;
             // Clear markers
-            for (var i = 0; i < markers.length; i++) {
-              listeners[i].a.remove();
-              listeners[i].b.remove();
-              markers[i].setMap(null);
+            for (var pokehash in markers) {
+              if (!markers.hasOwnProperty(pokehash)) {
+                continue;
+              }
+              if (data.hasOwnProperty(pokehash) && hidden_layers.indexOf(data[pokehash].name) == -1) {
+                continue;
+              }
+              var marker = markers[pokehash];
+              marker.listeners[0].remove();
+              marker.listeners[1].remove();
+              marker.setMap(null);
+              
+              delete markers[pokehash];
             }
-            listeners = [];
-            markers = [];
 
             // Add updated markers
             for (var pokehash in data) {
               if (!data.hasOwnProperty(pokehash)) {
                 // inherited, not interesting to us
+                continue;
+              }
+              if (markers.hasOwnProperty(pokehash)) {
                 continue;
               }
               var p = data[pokehash];
@@ -149,19 +159,19 @@
                   icon: image
                 });
 
-                var listenerPair = {
-                  a: google.maps.event.addListener(marker, 'mouseover', function() {
+                var listenerPair = [
+                  google.maps.event.addListener(marker, 'mouseover', function() {
                     infowindow.setContent(this.title);
                     infowindow.open(map, this);
                   }),
 
-                  b: google.maps.event.addListener(marker, 'mouseout', function() {
+                  google.maps.event.addListener(marker, 'mouseout', function() {
                     infowindow.close(map, this);
                   })
-                };
+                ];
 
-                listeners.push(listenerPair);
-                markers.push(marker);
+                marker.listeners = listenerPair;
+                markers[pokehash] = marker;
               }
             }
 
@@ -182,8 +192,7 @@
 
       data = {};
       map = null;
-      markers = [];
-      listeners = [];
+      markers = {};
       hidden_layers = [];
       layers = [];
       updated = false;

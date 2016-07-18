@@ -32,6 +32,7 @@
        list-style-type: none;
       }
     </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
   </head>
   <body>
     <div id="map"></div>
@@ -239,6 +240,34 @@
         legend.innerHTML = content.join('');
         legend.index = 1;
         map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(legend);
+        
+        if(navigator.geolocation) {
+          navigator.geolocation.watchPosition(
+            watchPosition,
+            function (PositionError) {
+              console.error(PositionError.message);
+            },
+            { enableHighAccuracy: true }
+          )
+        }
+      }
+      
+      function watchPosition(position) {
+      console.log(position);
+        $.ajax({
+          type: "POST",
+          url: "/pokemap/location",
+          data: {
+            lat: position.coords.latitude,
+            lon: position.coords.longitude,
+            alt: position.coords.altitude
+          }
+        }).done(function( o ) {
+          map.panTo({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+        });
       }
     </script>
   </body>

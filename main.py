@@ -10,6 +10,7 @@ import os
 import pokemon_pb2
 import time
 import traceback
+import threading
 
 from google.protobuf.internal import encoder
 from gpsoauth import perform_master_login, perform_oauth
@@ -18,6 +19,8 @@ from geopy.geocoders import GoogleV3
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 from s2sphere import *
+from bottle import post, route, run, request
+from Queue import Queue, Empty
 
 def encode(cellid):
     output = []
@@ -62,6 +65,16 @@ CLIENT_SIG = '321187995bc7cdc2b5fc91b11a96e2baa8602c62'
 NUM_STEPS = 20
 DATA_FILE = 'data.json'
 DATA = {}
+
+location_lock = threading.Lock()
+original_lat = 0
+original_long = 0
+
+@post('/location')
+def receive_location():
+    with location_lock:
+        original_lat = float(request.forms.get('lat'))
+        original_lon = float(request.forms.get('lon'))
 
 def f2i(float):
   return struct.unpack('<Q', struct.pack('<d', float))[0]
@@ -123,13 +136,13 @@ def set_location(location_name):
     set_location_coords(loc.latitude, loc.longitude, loc.altitude)
 
 def set_location_coords(lat, long, alt):
-    global COORDS_LATITUDE, COORDS_LONGITUDE, COORDS_ALTITUDE
-    global FLOAT_LAT, FLOAT_LONG
-    FLOAT_LAT = lat
-    FLOAT_LONG = long
-    COORDS_LATITUDE = f2i(lat) # 0x4042bd7c00000000 # f2i(lat)
-    COORDS_LONGITUDE = f2i(long) # 0xc05e8aae40000000 #f2i(long)
-    COORDS_ALTITUDE = f2i(alt)
+      global COORDS_LATITUDE, COORDS_LONGITUDE, COORDS_ALTITUDE
+      global FLOAT_LAT, FLOAT_LONG
+      FLOAT_LAT = lat
+      FLOAT_LONG = long
+      COORDS_LATITUDE = f2i(lat) # 0x4042bd7c00000000 # f2i(lat)
+      COORDS_LONGITUDE = f2i(long) # 0xc05e8aae40000000 #f2i(long)
+      COORDS_ALTITUDE = f2i(alt)
 
 def get_location_coords():
     return (COORDS_LATITUDE, COORDS_LONGITUDE, COORDS_ALTITUDE)
@@ -309,7 +322,7 @@ def main():
     parser.add_argument("-a", "--auth_service", help="Auth Service", default='ptc')
     parser.add_argument("-u", "--username", help="PTC Username", required=True)
     parser.add_argument("-p", "--password", help="PTC Password", required=True)
-    parser.add_argument("-l", "--location", help="Location", required=True)
+    parser.add_argument("-l", "--location", help="Fixed location")
     parser.add_argument("-d", "--debug", help="Debug Mode", action='store_true')
     parser.add_argument("-s", "--client_secret", help="PTC Client Secret")
     parser.set_defaults(DEBUG=False)
@@ -328,7 +341,13 @@ def main():
         global PTC_CLIENT_SECRET
         PTC_CLIENT_SECRET = args.client_secret
 
-    set_location(args.location)
+    if args.location is None:
+        locationThread = threading.Thread(target=run, kwargs=dict(host='localhost', port=63973))
+        locationThread.daemon = True
+        locationThread.start()
+    else:
+        set_location(args.location)
+        origin = LatLng.from_degrees(FLOAT_LAT, FLOAT_LONG)
 
     if args.auth_service == 'ptc':
         access_token = login_ptc(args.username, args.password)
@@ -377,11 +396,10 @@ def main():
         else:
             print('[-] Ooops...')
 
-    origin = LatLng.from_degrees(FLOAT_LAT, FLOAT_LONG)
     step = 0
     while True:
-        original_lat = FLOAT_LAT
-        original_long = FLOAT_LONG
+        origin = LatLng.from_degrees(FLOAT_LAT, FLOAT_LONG)
+
         parent = CellId.from_lat_lng(LatLng.from_degrees(FLOAT_LAT, FLOAT_LONG)).parent(15)
 
         h = heartbeat(api_endpoint, full_access_token, response)
@@ -391,7 +409,8 @@ def main():
             latlng = LatLng.from_point(Cell(child).get_center())
             set_location_coords(latlng.lat().degrees, latlng.lng().degrees, 0)
             hs.append(heartbeat(api_endpoint, full_access_token, response))
-        set_location_coords(original_lat, original_long, 0)
+        with location_lock:
+            set_location_coords(original_lat, original_long, 0)
 
         visible = []
 
@@ -439,7 +458,8 @@ def main():
         step += 1
         set_location_coords(next.lat().degrees, next.lng().degrees, 0)
         if step >= NUM_STEPS:
-            set_location_coords(original_lat, original_long, 0)
+            with location_lock:
+                set_location_coords(original_lat, original_long, 0)
             step = 0
 
 

@@ -215,6 +215,9 @@
         config = JSON.parse(configData)
         console.log("Using api key: " + config.GOOGLE_MAPS_API_KEY);
         loadScript("https://maps.googleapis.com/maps/api/js?key=" + config.GOOGLE_MAPS_API_KEY + "&libraries=drawing&callback=initMap");
+        for (var i = 0; i < config.hidden_pkmn.length; ++i) {
+          hidden_layers[config.hidden_pkmn[i]] = 1;
+        }
       });
 
       function initMap() {

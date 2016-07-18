@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*- 
+
 import requests
 import re
 import struct
@@ -357,16 +359,19 @@ def main():
 
             payload = response.payload[0]
             profile = pokemon_pb2.ResponseEnvelop.ProfilePayload()
-            profile.ParseFromString(payload)
-            print('[+] Username: {}'.format(profile.profile.username))
+            try:
+                profile.ParseFromString(payload)
+                print('[+] Username: {}'.format(profile.profile.username))
 
-            creation_time = datetime.fromtimestamp(int(profile.profile.creation_time)/1000)
-            print('[+] You are playing Pokemon Go since: {}'.format(
-                creation_time.strftime('%Y-%m-%d %H:%M:%S'),
-            ))
+                creation_time = datetime.fromtimestamp(int(profile.profile.creation_time)/1000)
+                print('[+] You are playing Pokemon Go since: {}'.format(
+                    creation_time.strftime('%Y-%m-%d %H:%M:%S'),
+                ))
 
-            for curr in profile.profile.currency:
-                print('[+] {}: {}'.format(curr.type, curr.amount))
+                for curr in profile.profile.currency:
+                    print('[+] {}: {}'.format(curr.type, curr.amount))
+            except UnicodeDecodeError as e:
+                print('[-] Unicode problems...')
 
             break
         else:

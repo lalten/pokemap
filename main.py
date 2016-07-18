@@ -303,7 +303,7 @@ def heartbeat(api_endpoint, full_access_token, response):
 def main():
     pokemons = json.load(open('pokemon.json'))
     parser = argparse.ArgumentParser()
-    parser.add_argument("-a", "--auth_service", help="Auth Service", required=True)
+    parser.add_argument("-a", "--auth_service", help="Auth Service", default='ptc')
     parser.add_argument("-u", "--username", help="PTC Username", required=True)
     parser.add_argument("-p", "--password", help="PTC Password", required=True)
     parser.add_argument("-l", "--location", help="Location", required=True)

@@ -3,6 +3,7 @@ import re
 import struct
 import json
 import argparse
+import os
 import pokemon_pb2
 import time
 
@@ -79,8 +80,9 @@ except:
 def write_data_to_file():
     prune()
 
-    with open(DATA_FILE, 'w') as f:
+    with open(DATA_FILE + ".new", 'w') as f:
         json.dump(DATA, f, indent=2)
+    os.rename(DATA_FILE + ".new", DATA_FILE);
 
 def add_pokemon(pokeId, name, lat, lng, timestamp, timeleft):
     expiry = timestamp + timeleft

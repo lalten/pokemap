@@ -135,6 +135,7 @@
               }
 
               if (layers.findIndex(function(v){ return v.id == p.id; }) == -1) {
+                console.log("Adding layer " + pkmn_label(p));
                 layers.push(p);
                 layers.sort(function(a, b){ return a.id - b.id; });
                 document.getElementById('pknum').innerHTML = " (" + (layers.length - 1) + ")";
@@ -163,12 +164,11 @@
                 detail_str = "<b>" + pkmn_label(p) + "</b><br>Time left: " + p.timeleft_str + "<br>Lat: " + p.lat + "<br>Long: " + p.lng;
 
                 if (markers.hasOwnProperty(pokehash)) {
-                  console.log("Updating marker " + p.name);
                   markers[pokehash].details = detail_str;
                   continue;
                 }
 
-                console.log("Adding marker " + p.name);
+                console.log("Adding marker " + pkmn_label(p));
 
                 var infowindow = new google.maps.InfoWindow({
                 });

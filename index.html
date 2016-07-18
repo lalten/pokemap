@@ -162,13 +162,13 @@
                   map: map,
                   position: {lat: p.lat, lng: p.lng},
                   label: "",
-                  title: "<b>"+p.name+"</b><br>Time left: " + p.timeleft_str + "<br>Lat: "+p.lat+"<br>Long: "+p.lng,
+                  details: "<b>"+p.name+"</b><br>Time left: " + p.timeleft_str + "<br>Lat: "+p.lat+"<br>Long: "+p.lng,
                   icon: image
                 });
 
                 var listenerPair = [
                   google.maps.event.addListener(marker, 'mouseover', function() {
-                    infowindow.setContent(this.title);
+                    infowindow.setContent(this.details);
                     infowindow.open(map, this);
                   }),
 

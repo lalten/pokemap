@@ -87,7 +87,7 @@
       var preLength = -1;
       var pkmn_size, pkmn_anchor;
       function refreshData() {
-        getFile("data.json", true, function(response) {
+        getFile("data.json?t=" + (new Date()).getTime(), true, function(response) {
           if ('undefined' == typeof pkmn_size) {
             // Maps API might not be loaded before the first refresh
             pkmn_size = new google.maps.Size(25, 25);

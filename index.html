@@ -103,15 +103,21 @@
             }
 
             // Add updated markers
+            var numPkmnType = {};
             for (var pokehash in data) {
               if (!data.hasOwnProperty(pokehash)) {
                 // inherited, not interesting to us
                 continue;
               }
+              var p = data[pokehash];
+              if (numPkmnType.hasOwnProperty(p.id)) {
+                numPkmnType[p.id] += 1;
+              } else {
+                numPkmnType[p.id] = 1;
+              }
               if (markers.hasOwnProperty(pokehash)) {
                 continue;
               }
-              var p = data[pokehash];
               if (!updated) {
                 map.setZoom(16);
                 map.panTo({lat: p.lat, lng: p.lng});
@@ -120,9 +126,9 @@
 
               if(hidden_layers.indexOf(p.name) == -1){
                 // Pokemon not hidden
-                if(layers.indexOf(p.name) == -1){
-                  layers.push(p.name);
-                  layers.sort();
+                if (layers.findIndex(function(v){ return v.name == p.name; }) == -1) {
+                  layers.push(p);
+                  layers.sort(function(a, b){ return a.name.localeCompare(b.name); });
                   document.getElementById('pknum').innerHTML = " (" + (layers.length - 1) + ")";
                 }
                 console.log("Adding marker " + p.name);
@@ -179,12 +185,15 @@
             // Draw layer manager
             var list = document.getElementById('legend-list');
             var content = [];
-            for (var id in layers) {
-              var pkmn = layers[id];
-              var checked = hidden_layers.indexOf(pkmn) != -1 ? "checked": "";
-              content.push("<li><input type='checkbox' id='" + pkmn +  "'" +
+            for (var i = 0; i < layers.length; ++i) {
+              var pkmn = layers[i];
+              if (!numPkmnType.hasOwnProperty(pkmn.id)) {
+                numPkmnType[pkmn.id] = 0;
+              }
+              var checked = hidden_layers.indexOf(pkmn.name) != -1 ? "checked": "";
+              content.push("<li><input type='checkbox' id='" + pkmn.name +  "'" +
               " onclick='toggleLayer(this.checked, this.id)' "+checked+"\/>" +
-              pkmn + "<\/li>");
+              pkmn.name + " (" + numPkmnType[pkmn.id] + ")" + "<\/li>");
             }
             list.innerHTML = content.join('');
           }

@@ -7,6 +7,7 @@ import argparse
 import os
 import pokemon_pb2
 import time
+import traceback
 
 from google.protobuf.internal import encoder
 from gpsoauth import perform_master_login, perform_oauth
@@ -175,7 +176,7 @@ def api_req(api_endpoint, full_access_token, *mehs, **kw):
             return (reqtime, p_ret)
         except Exception as e:
             if DEBUG:
-                print(e)
+                print traceback.print_exc()
             print('[-] API request error, retrying')
             time.sleep(1)
             continue

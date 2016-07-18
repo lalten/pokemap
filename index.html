@@ -34,6 +34,7 @@
   <body>
     <div id="map"></div>
     <div id="capture"></div>
+    <script src="minify.json.js"></script>
     <script>
       function loadScript(src) {
         var element = document.createElement("script");
@@ -73,6 +74,14 @@
         }
         refreshData();
       };
+      
+      function pkmn_label(pkmn) {
+        var elemname = "#" + pkmn.id + ". " + pkmn.name;
+        if (pkmn.id == -1) {
+          elemname = "(player)";
+        }
+        return elemname;
+      }
 
 
       var preLength = -1;
@@ -118,6 +127,12 @@
                 updated = true;
               }
 
+              if (layers.findIndex(function(v){ return v.id == p.id; }) == -1) {
+                layers.push(p);
+                layers.sort(function(a, b){ return a.id - b.id; });
+                document.getElementById('pknum').innerHTML = " (" + (layers.length - 1) + ")";
+              }
+
               if (hidden_layers[p.id] != 1) {
                 // Pokemon not hidden
 
@@ -138,7 +153,7 @@
                 }
                 p.timeleft_str += Math.floor(timeleft_strify) + "s";
                 
-                detail_str = "<b>" + p.name + "</b><br>Time left: " + p.timeleft_str + "<br>Lat: " + p.lat + "<br>Long: " + p.lng;
+                detail_str = "<b>" + pkmn_label(p) + "</b><br>Time left: " + p.timeleft_str + "<br>Lat: " + p.lat + "<br>Long: " + p.lng;
 
                 if (markers.hasOwnProperty(pokehash)) {
                   console.log("Updating marker " + p.name);
@@ -146,11 +161,6 @@
                   continue;
                 }
 
-                if (layers.findIndex(function(v){ return v.name == p.name; }) == -1) {
-                  layers.push(p);
-                  layers.sort(function(a, b){ return a.name.localeCompare(b.name); });
-                  document.getElementById('pknum').innerHTML = " (" + (layers.length - 1) + ")";
-                }
                 console.log("Adding marker " + p.name);
 
                 var infowindow = new google.maps.InfoWindow({
@@ -194,9 +204,10 @@
                 numPkmnType[pkmn.id] = 0;
               }
               var checked = hidden_layers[pkmn.id] == 1 ? "checked": "";
+              var elemname = pkmn_label(pkmn);
               content.push("<li><input type='checkbox' id='hide_" + pkmn.id +  "'" +
               " onclick='toggleLayer(this.checked, this.id.substr(5))' "+checked+"\/>" +
-              pkmn.name + " (" + numPkmnType[pkmn.id] + ")" + "<\/li>");
+              elemname + " (" + numPkmnType[pkmn.id] + ")" + "<\/li>");
             }
             list.innerHTML = content.join('');
           }
@@ -212,7 +223,7 @@
 
 
       getFile("config.json", false, function(configData) {
-        config = JSON.parse(configData)
+        config = JSON.parse(JSON.minify(configData));
         console.log("Using api key: " + config.GOOGLE_MAPS_API_KEY);
         loadScript("https://maps.googleapis.com/maps/api/js?key=" + config.GOOGLE_MAPS_API_KEY + "&libraries=drawing&callback=initMap");
         for (var i = 0; i < config.hidden_pkmn.length; ++i) {

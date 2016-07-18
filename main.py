@@ -267,15 +267,18 @@ def heartbeat(api_endpoint, access_token, response):
     m.lat = COORDS_LATITUDE
     m.long = COORDS_LONGITUDE
     m1.message = m.SerializeToString()
-    (hbtime, response) = get_profile(
-        access_token,
-        api_endpoint,
-        response.unknown7,
-        m1,
-        pokemon_pb2.RequestEnvelop.Requests(),
-        m4,
-        pokemon_pb2.RequestEnvelop.Requests(),
-        m5)
+    while True:
+        (hbtime, response) = get_profile(
+            access_token,
+            api_endpoint,
+            response.unknown7,
+            m1,
+            pokemon_pb2.RequestEnvelop.Requests(),
+            m4,
+            pokemon_pb2.RequestEnvelop.Requests(),
+            m5)
+        if response.payload:
+            break
     payload = response.payload[0]
     heartbeat = pokemon_pb2.ResponseEnvelop.HeartbeatPayload()
     heartbeat.ParseFromString(payload)

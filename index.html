@@ -115,9 +115,6 @@
               } else {
                 numPkmnType[p.id] = 1;
               }
-              if (markers.hasOwnProperty(pokehash)) {
-                continue;
-              }
               if (!updated) {
                 map.setZoom(16);
                 map.panTo({lat: p.lat, lng: p.lng});
@@ -126,20 +123,6 @@
 
               if(hidden_layers.indexOf(p.name) == -1){
                 // Pokemon not hidden
-                if (layers.findIndex(function(v){ return v.name == p.name; }) == -1) {
-                  layers.push(p);
-                  layers.sort(function(a, b){ return a.name.localeCompare(b.name); });
-                  document.getElementById('pknum').innerHTML = " (" + (layers.length - 1) + ")";
-                }
-                console.log("Adding marker " + p.name);
-
-                var infowindow = new google.maps.InfoWindow({
-                });
-
-                var image = "https://raw.githubusercontent.com/AHAAAAAAA/PokemonGo-Map/master/static/icons/" + p.id + ".png";
-                if (p.id == -1) {
-                    image = 'https://agents.farmers.com/images/walking.png';
-                }
 
                 p.timeleft = p.expiry - p.timestamp;
                 timeleft_strify = p.timeleft
@@ -157,12 +140,35 @@
                     timeleft_strify %= 60;
                 }
                 p.timeleft_str += Math.floor(timeleft_strify) + "s";
+                
+                detail_str = "<b>" + p.name + "</b><br>Time left: " + p.timeleft_str + "<br>Lat: " + p.lat + "<br>Long: " + p.lng;
+
+                if (markers.hasOwnProperty(pokehash)) {
+                  console.log("Updating marker " + p.name);
+                  markers[pokehash].details = detail_str;
+                  continue;
+                }
+
+                if (layers.findIndex(function(v){ return v.name == p.name; }) == -1) {
+                  layers.push(p);
+                  layers.sort(function(a, b){ return a.name.localeCompare(b.name); });
+                  document.getElementById('pknum').innerHTML = " (" + (layers.length - 1) + ")";
+                }
+                console.log("Adding marker " + p.name);
+
+                var infowindow = new google.maps.InfoWindow({
+                });
+
+                var image = "https://raw.githubusercontent.com/AHAAAAAAA/PokemonGo-Map/master/static/icons/" + p.id + ".png";
+                if (p.id == -1) {
+                    image = 'https://agents.farmers.com/images/walking.png';
+                }
 
                 var marker = new google.maps.Marker({
                   map: map,
                   position: {lat: p.lat, lng: p.lng},
                   label: "",
-                  details: "<b>"+p.name+"</b><br>Time left: " + p.timeleft_str + "<br>Lat: "+p.lat+"<br>Long: "+p.lng,
+                  details: detail_str,
                   icon: image
                 });
 

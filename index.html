@@ -67,12 +67,9 @@
 
       function toggleLayer(checked, pkmn) {
         if (checked) {
-            hidden_layers.push(pkmn);
+            hidden_layers[pkmn] = 1;
         } else {
-            var index = hidden_layers.indexOf(pkmn);
-            if(index > -1){
-              hidden_layers.splice(index,1);
-            }
+            delete hidden_layers[pkmn];
         }
         refreshData();
       };
@@ -91,7 +88,7 @@
               if (!markers.hasOwnProperty(pokehash)) {
                 continue;
               }
-              if (data.hasOwnProperty(pokehash) && hidden_layers.indexOf(data[pokehash].name) == -1) {
+              if (data.hasOwnProperty(pokehash) && hidden_layers[data[pokehash].name] != 1) {
                 continue;
               }
               var marker = markers[pokehash];
@@ -121,7 +118,7 @@
                 updated = true;
               }
 
-              if(hidden_layers.indexOf(p.name) == -1){
+              if (hidden_layers[p.name] != 1) {
                 // Pokemon not hidden
 
                 p.timeleft = p.expiry - p.timestamp;
@@ -196,7 +193,7 @@
               if (!numPkmnType.hasOwnProperty(pkmn.id)) {
                 numPkmnType[pkmn.id] = 0;
               }
-              var checked = hidden_layers.indexOf(pkmn.name) != -1 ? "checked": "";
+              var checked = hidden_layers[pkmn.name] == 1 ? "checked": "";
               content.push("<li><input type='checkbox' id='" + pkmn.name +  "'" +
               " onclick='toggleLayer(this.checked, this.id)' "+checked+"\/>" +
               pkmn.name + " (" + numPkmnType[pkmn.id] + ")" + "<\/li>");
@@ -209,7 +206,7 @@
       data = {};
       map = null;
       markers = {};
-      hidden_layers = [];
+      hidden_layers = {};
       layers = [];
       updated = false;
 

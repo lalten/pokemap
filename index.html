@@ -74,17 +74,6 @@
         return (date.getUTCMinutes() > 0 ? date.getUTCMinutes() + "m " : "") + date.getUTCSeconds() + "s";
       }
 
-      function getImage(p) {
-        var name = p.name;
-        if (p.name == "Nidoran F") {
-          name = "Nidoran";
-        }
-        else if (name == "Nidoran M") {
-          name = "Nidorano";
-        }
-        return "http://icons.iconarchive.com/icons/hektakun/pokemon/72/" + pad(p.id, 3) + "-" + cap(name) + "-icon.png";
-      }
-
       function toggleLayer(checked, pkmn) {
         if (checked) {
             hidden_layers[pkmn] = 1;
@@ -109,8 +98,8 @@
         getFile("data.json?t=" + (new Date()).getTime(), true, function(response) {
           if ('undefined' == typeof pkmn_size) {
             // Maps API might not be loaded before the first refresh
-            pkmn_size = new google.maps.Size(25, 25);
-            pkmn_anchor = new google.maps.Point(13, 22);
+            pkmn_size = new google.maps.Size(30, 30);
+            pkmn_anchor = new google.maps.Point(15, 15);
           }
 
           console.log("Refreshing data...");
@@ -194,7 +183,8 @@
 
                 var image = "https://raw.githubusercontent.com/AHAAAAAAA/PokemonGo-Map/master/static/icons/" + p.id + ".png";
                 if (p.id == -1) {
-                    image = 'https://agents.farmers.com/images/walking.png';
+                    //image = 'https://agents.farmers.com/images/walking.png';
+                    image = null;
                 }
 
                 var marker = new google.maps.Marker({

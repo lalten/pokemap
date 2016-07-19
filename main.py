@@ -82,9 +82,8 @@ except:
 def write_data_to_file():
     prune()
 
-    with open(DATA_FILE + ".new", 'w') as f:
+    with open(DATA_FILE, 'w') as f:
         json.dump(DATA, f, indent=2)
-    os.rename(DATA_FILE + ".new", DATA_FILE);
 
 def add_pokemon(pokeId, name, lat, lng, timestamp, timeleft):
     expiry = timestamp + timeleft
@@ -335,7 +334,7 @@ def scan(api_endpoint, access_token, response, origin, pokemons):
                 for wild in cell.WildPokemon:
                     hash = wild.SpawnPointId + ':' + str(wild.pokemon.PokemonId)
                     if (hash not in seen):
-                        visible.append(wild)
+                        visible.append((hbtime, wild))
                         seen.add(hash)
 
         for cell in h[2].cells:

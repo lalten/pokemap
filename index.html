@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>PokeScanner</title>
+    <title>PokéScanner</title>
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
     <meta charset="utf-8">
+    <link rel="icon" type="image/png" href="favicon.png" sizes="192x192">
     <style>
       html, body {
         height: 100%;
@@ -96,25 +97,43 @@
       };
 
 
+      var preLength = -1;
       function refreshData() {
         getFile("data.json", true, function(response) {
           console.log("Refreshing data...");
-          var preLength = data.length;
           data = JSON.parse(response);
 
-          if (preLength != data.length) {
+          if (preLength != response.length) {
+            preLength = response.length;
             // Clear markers
-            for (var i = 0; i < markers.length; i++) {
-              listeners[i].a.remove();
-              listeners[i].b.remove();
-              markers[i].setMap(null);
+            for (var pokehash in markers) {
+              if (!markers.hasOwnProperty(pokehash)) {
+                continue;
+              }
+              if (data.hasOwnProperty(pokehash) && hidden_layers.indexOf(data[pokehash].name) == -1) {
+                continue;
+              }
+              var marker = markers[pokehash];
+              marker.listeners[0].remove();
+              marker.listeners[1].remove();
+              marker.setMap(null);
+              
+              delete markers[pokehash];
             }
-            listeners = [];
-            markers = [];
 
             // Add updated markers
-            for (var i = 0; i < data.length; i++) {
-              var p = data[i];
+            var numPkmnType = {};
+            for (var pokehash in data) {
+              if (!data.hasOwnProperty(pokehash)) {
+                // inherited, not interesting to us
+                continue;
+              }
+              var p = data[pokehash];
+              if (numPkmnType.hasOwnProperty(p.id)) {
+                numPkmnType[p.id] += 1;
+              } else {
+                numPkmnType[p.id] = 1;
+              }
               if (!updated) {
                 map.setZoom(16);
                 map.panTo({lat: p.lat, lng: p.lng});
@@ -123,49 +142,83 @@
 
               if(hidden_layers.indexOf(p.name) == -1){
                 // Pokemon not hidden
-                if(layers.indexOf(p.name) == -1){
-                  layers.push(p.name);
+
+                p.timeleft = p.expiry - p.timestamp;
+                timeleft_strify = p.timeleft
+                p.timeleft_str = ''
+                if (timeleft_strify > 86400) {
+                    p.timeleft_str += Math.floor(timeleft_strify / 86400) + " days, ";
+                    timeleft_strify %= 86400;
+                }
+                if (timeleft_strify > 3600) {
+                    p.timeleft_str += Math.floor(timeleft_strify / 3600) + "h";
+                    timeleft_strify %= 3600;
+                }
+                if (timeleft_strify > 60) {
+                    p.timeleft_str += Math.floor(timeleft_strify / 60) + "m";
+                    timeleft_strify %= 60;
+                }
+                p.timeleft_str += Math.floor(timeleft_strify) + "s";
+                
+                detail_str = "<b>" + p.name + "</b><br>Time left: " + p.timeleft_str + "<br>Lat: " + p.lat + "<br>Long: " + p.lng;
+
+                if (markers.hasOwnProperty(pokehash)) {
+                  console.log("Updating marker " + p.name);
+                  markers[pokehash].details = detail_str;
+                  continue;
+                }
+
+                if (layers.findIndex(function(v){ return v.name == p.name; }) == -1) {
+                  layers.push(p);
+                  layers.sort(function(a, b){ return a.name.localeCompare(b.name); });
+                  document.getElementById('pknum').innerHTML = " (" + (layers.length - 1) + ")";
                 }
                 console.log("Adding marker " + p.name);
 
                 var infowindow = new google.maps.InfoWindow({
                 });
 
-                var image = getImage(p);
+                var image = "https://raw.githubusercontent.com/AHAAAAAAA/PokemonGo-Map/master/static/icons/" + p.id + ".png";
+                if (p.id == -1) {
+                    image = 'https://agents.farmers.com/images/walking.png';
+                }
 
                 var marker = new google.maps.Marker({
                   map: map,
                   position: {lat: p.lat, lng: p.lng},
                   label: "",
-                  title: "<b>"+p.name+"</b><br>Time left: " + formatSeconds(p.timeleft) + "<br>Lat: "+p.lat+"<br>Long: "+p.lng,
+                  details: detail_str,
                   icon: image
                 });
 
-                var listenerPair = {
-                  a: google.maps.event.addListener(marker, 'mouseover', function() {
-                    infowindow.setContent(this.title);
+                var listenerPair = [
+                  google.maps.event.addListener(marker, 'mouseover', function() {
+                    infowindow.setContent(this.details);
                     infowindow.open(map, this);
                   }),
 
-                  b: google.maps.event.addListener(marker, 'mouseout', function() {
+                  google.maps.event.addListener(marker, 'mouseout', function() {
                     infowindow.close(map, this);
                   })
-                };
+                ];
 
-                listeners.push(listenerPair);
-                markers.push(marker);
+                marker.listeners = listenerPair;
+                markers[pokehash] = marker;
               }
             }
 
             // Draw layer manager
             var list = document.getElementById('legend-list');
             var content = [];
-            for (var id in layers) {
-              var pkmn = layers[id];
-              var checked = hidden_layers.indexOf(pkmn) != -1 ? "checked": "";
-              content.push("<li><input type='checkbox' id='" + pkmn +  "'" +
+            for (var i = 0; i < layers.length; ++i) {
+              var pkmn = layers[i];
+              if (!numPkmnType.hasOwnProperty(pkmn.id)) {
+                numPkmnType[pkmn.id] = 0;
+              }
+              var checked = hidden_layers.indexOf(pkmn.name) != -1 ? "checked": "";
+              content.push("<li><input type='checkbox' id='" + pkmn.name +  "'" +
               " onclick='toggleLayer(this.checked, this.id)' "+checked+"\/>" +
-              pkmn + "<\/li>");
+              pkmn.name + " (" + numPkmnType[pkmn.id] + ")" + "<\/li>");
             }
             list.innerHTML = content.join('');
           }
@@ -174,8 +227,7 @@
 
       data = {};
       map = null;
-      markers = [];
-      listeners = [];
+      markers = {};
       hidden_layers = [];
       layers = [];
       updated = false;
@@ -198,7 +250,7 @@
         var legend = document.createElement('div');
         legend.id = 'legend';
         var content = [];
-        content.push('<h3>Hide Pokemon</h3>');
+        content.push('<h3>Hide Pokemon<span id="pknum"></span></h3>');
         content.push('<div id="legend-list"></div>');
         legend.innerHTML = content.join('');
         legend.index = 1;

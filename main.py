@@ -3,7 +3,6 @@ import re
 import struct
 import json
 import argparse
-import os
 import pokemon_pb2
 import time
 

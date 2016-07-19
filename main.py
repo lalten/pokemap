@@ -328,7 +328,7 @@ def scan(api_endpoint, access_token, response, origin, pokemons):
         visible = []
 
         for (coords, hbtime, hh) in hs:
-            add_pokemon(-1, 'player', coords[0], coords[1], hbtime, 5)
+            add_pokemon(-1, 'player', deflat, deflng, hbtime, 5)
             for cell in hh.cells:
                 for wild in cell.WildPokemon:
                     hash = wild.SpawnPointId + ':' + str(wild.pokemon.PokemonId)

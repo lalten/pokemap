@@ -35,7 +35,6 @@
   <body>
     <div id="map"></div>
     <div id="capture"></div>
-    <script src="minify.json.js"></script>
     <script>
       function loadScript(src) {
         var element = document.createElement("script");
@@ -243,7 +242,7 @@
 
 
       getFile("config.json", false, function(configData) {
-        config = JSON.parse(JSON.minify(configData));
+        config = JSON.parse(configData);
         console.log("Using api key: " + config.GOOGLE_MAPS_API_KEY);
         loadScript("https://maps.googleapis.com/maps/api/js?key=" + config.GOOGLE_MAPS_API_KEY + "&libraries=drawing&callback=initMap");
         for (var i = 0; i < config.hidden_pkmn.length; ++i) {
